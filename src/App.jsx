@@ -1,128 +1,56 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Header from "./Header";
-import ProductCard from "./ProductCard";
-import CartItem from "./CartItem";
+import HomePage from "./pages/HomePage";
+import ProductsPage from "./pages/ProductsPage";
+import ProductDetailsPage from "./pages/ProductDetailsPage";
+import CartPage from "./pages/CartPage";
 import "./App.css";
 
+const products = [
+  { id: 1, name: "Wireless Headphones", price: 99.99, image: "https://placehold.co/600x400/1e293b/ffffff?text=Headphones", description: "Premium noise-cancelling headphones with 30-hour battery life." },
+  { id: 2, name: "Smart Watch", price: 249.99, image: "https://placehold.co/600x400/2563eb/ffffff?text=Smart+Watch", description: "Fitness tracker with heart rate monitor and GPS." },
+  { id: 3, name: "Bluetooth Speaker", price: 79.99, image: "https://placehold.co/600x400/7c3aed/ffffff?text=Speaker", description: "Portable waterproof speaker with 360-degree sound." },
+  { id: 4, name: "Laptop Stand", price: 49.99, image: "https://placehold.co/600x400/059669/ffffff?text=Laptop+Stand", description: "Ergonomic aluminum stand for laptops and tablets." },
+  { id: 5, name: "Webcam", price: 129.99, image: "https://placehold.co/600x400/d97706/ffffff?text=Webcam", description: "4K webcam with auto-focus and noise reduction." },
+  { id: 6, name: "Mechanical Keyboard", price: 159.99, image: "https://placehold.co/600x400/dc2626/ffffff?text=Keyboard", description: "RGB backlit keyboard with custom switches." }
+];
+
 function App() {
-  const products = [
-    {
-      id: 1,
-      name: "Wireless Headphones",
-      price: 99.99,
-      image: "https://placehold.co/600x400/1e293b/ffffff?text=Headphones",
-      description: "Premium noise-cancelling headphones with 30-hour battery life.",
-    },
-    {
-      id: 2,
-      name: "Smart Watch",
-      price: 249.99,
-      image: "https://placehold.co/600x400/2563eb/ffffff?text=Smart+Watch",
-      description: "Fitness tracker with heart rate monitor and GPS.",
-    },
-    {
-      id: 3,
-      name: "Bluetooth Speaker",
-      price: 79.99,
-      image: "https://placehold.co/600x400/7c3aed/ffffff?text=Speaker",
-      description: "Portable waterproof speaker with 360-degree sound.",
-    },
-    {
-      id: 4,
-      name: "Laptop Stand",
-      price: 49.99,
-      image: "https://placehold.co/600x400/059669/ffffff?text=Laptop+Stand",
-      description: "Ergonomic aluminum stand for laptops and tablets.",
-    },
-    {
-      id: 5,
-      name: "Webcam",
-      price: 129.99,
-      image: "https://placehold.co/600x400/d97706/ffffff?text=Webcam",
-      description: "4K webcam with auto-focus and noise reduction.",
-    },
-    {
-      id: 6,
-      name: "Mechanical Keyboard",
-      price: 159.99,
-      image: "https://placehold.co/600x400/dc2626/ffffff?text=Keyboard",
-      description: "RGB backlit keyboard with custom switches.",
-    },
-  ];
+  const [cart, setCart] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("componentCornerCart")) || []; }
+    catch { return []; }
+  });
 
-  const [cart, setCart] = useState([]);
+  useEffect(() => {
+    localStorage.setItem("componentCornerCart", JSON.stringify(cart));
+  }, [cart]);
 
-  const addToCart = (product) => {
-    setCart((currentCart) => [...currentCart, product]);
-  };
+  const addToCart = (product) => setCart((currentCart) => [...currentCart, product]);
 
   const removeFromCart = (id) => {
-    setCart((currentCart) =>
-      currentCart.filter((item) => item.id !== id)
-    );
+    setCart((currentCart) => {
+      const index = currentCart.findIndex((item) => item.id === id);
+      if (index === -1) return currentCart;
+      return currentCart.filter((_, itemIndex) => itemIndex !== index);
+    });
   };
 
-  const cartTotal = cart.reduce((total, item) => total + item.price, 0);
-
   return (
-    <div className="app">
-      <Header cartCount={cart.length} />
-
-      <main>
-        <section className="hero">
-          <h1>Welcome to ComponentCorner</h1>
-          <p>
-            Find useful tech products for your everyday life.
-          </p>
-        </section>
-
-        <section className="products-section">
-          <h2>Our Products</h2>
-
-          <div className="products-grid">
-            {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAddToCart={addToCart}
-              />
-            ))}
-          </div>
-        </section>
-
-        <section className="cart-section">
-          <h2>Shopping Cart</h2>
-
-          {cart.length === 0 ? (
-            <div className="empty-cart">
-              <p>Your cart is empty.</p>
-              <p>Add a product above to get started!</p>
-            </div>
-          ) : (
-            <>
-              <div className="cart-items">
-                {cart.map((item, index) => (
-                  <CartItem
-                    key={`${item.id}-${index}`}
-                    item={item}
-                    onRemove={removeFromCart}
-                  />
-                ))}
-              </div>
-
-              <div className="cart-total">
-                <span>Total:</span>
-                <strong>${cartTotal.toFixed(2)}</strong>
-              </div>
-            </>
-          )}
-        </section>
-      </main>
-
-      <footer>
-        <p>© 2026 ComponentCorner</p>
-      </footer>
-    </div>
+    <BrowserRouter>
+      <div className="app">
+        <Header cartCount={cart.length} />
+        <main>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/products" element={<ProductsPage products={products} addToCart={addToCart} />} />
+            <Route path="/products/:id" element={<ProductDetailsPage products={products} addToCart={addToCart} />} />
+            <Route path="/cart" element={<CartPage cart={cart} removeFromCart={removeFromCart} />} />
+          </Routes>
+        </main>
+        <footer><p>© 2026 ComponentCorner</p></footer>
+      </div>
+    </BrowserRouter>
   );
 }
 
